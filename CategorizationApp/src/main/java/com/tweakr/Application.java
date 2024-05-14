@@ -1,6 +1,10 @@
 package com.tweakr;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
+import java.awt.*;
+import java.io.File;
+import java.io.IOException;
 
 public class Application extends JFrame {
 
@@ -9,11 +13,15 @@ public class Application extends JFrame {
     JMenuItem openFolderButton;
     JMenuItem exitButton;
 
-    public Application() {
+    CategorizationUI categorizationUI;
+
+    public Application() throws UnsupportedLookAndFeelException, ClassNotFoundException, InstantiationException, IllegalAccessException {
         super("Tweakr Categorization");
+        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(400, 800);
+        setLayout(new BorderLayout());
+        setSize(800, 800);
         setResizable(true);
 
         menu = new JMenuBar();
@@ -26,6 +34,9 @@ public class Application extends JFrame {
 
         menu.add(fileMenu);
         setJMenuBar(menu);
+
+        categorizationUI = new CategorizationUI();
+        add(categorizationUI, BorderLayout.CENTER);
 
 
         setVisible(true);
