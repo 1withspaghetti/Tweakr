@@ -16,7 +16,7 @@ public class Application extends JFrame {
     JButton fileButton;
     JButton exitButton;
     File imagePath;
-    ImageIcon currentIcon = new ImageIcon("C:\\Users\\willi\\OneDrive\\probably very important stuff\\Pictures\\Camera Roll\\captures and misc\\discord pfp");
+    ImageIcon currentIcon; // = new ImageIcon("C:\\Users\\willi\\OneDrive\\probably very important stuff\\Pictures\\Camera Roll\\captures and misc\\discord pfp\\goofy_dog.png");
     JLabel image;
 
     public Application() throws UnsupportedLookAndFeelException, ClassNotFoundException, InstantiationException, IllegalAccessException {
@@ -33,31 +33,34 @@ public class Application extends JFrame {
         fileChooser = new JFileChooser(System.getProperty("user.dir"));
         panel = new JPanel();
         fileButton = new JButton("Choose files");
-        text = new JTextArea("haiii",1, 10);
         exitButton = new JButton("Exit");
-        //image = new JLabel()
+        image = new JLabel(currentIcon);
 
-        //fileButton.setlo
-        setLayout(new GridBagLayout());
+        setLayout(new BorderLayout());
 
         panel.add(fileButton);
-        //panel.add(text);
         panel.add(exitButton);
-        //panel.setLayout(new )
+        panel.add(image);
         add(panel);
-        setVisible(true);
+
 
         fileButton.addActionListener(e -> {
-            //fileChooser.showSaveDialog(null);
-            //image = new JLabel()
-            System.out.println("A");
-            panel.add(new JButton("jdiejdjiw"));
-            System.out.println("B");
+
+            if (image != null) panel.remove(image);
+            fileChooser.showSaveDialog(null);
+            imagePath = fileChooser.getSelectedFile().getAbsoluteFile();
+            currentIcon = new ImageIcon(String.valueOf(imagePath));
+            image = new JLabel(currentIcon);
+
+            panel.add(image);
+            panel.revalidate();
+            panel.repaint();
         });
 
         exitButton.addActionListener(e -> {
-            //dispatchEvent(new WindowEvent(Application, WindowEvent.WINDOW_CLOSED));
             dispose();
         });
+
+        setVisible(true);
     }
 }
