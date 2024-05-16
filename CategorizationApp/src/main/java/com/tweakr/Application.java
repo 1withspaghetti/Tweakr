@@ -23,6 +23,7 @@ public class Application extends JFrame {
         setLayout(new BorderLayout());
         setSize(800, 800);
         setResizable(true);
+        setLocationRelativeTo(null);
 
         menu = new JMenuBar();
 
@@ -37,6 +38,12 @@ public class Application extends JFrame {
 
         categorizationUI = new CategorizationUI();
         add(categorizationUI, BorderLayout.CENTER);
+
+        try {
+            categorizationUI.setCurrentImage(ImageIO.read(new File("C:\\Users\\tyler\\OneDrive\\Pictures\\Saved Pictures\\blue_mountains.jpg")));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
 
         setVisible(true);

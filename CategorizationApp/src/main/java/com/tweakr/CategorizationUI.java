@@ -1,29 +1,34 @@
 package com.tweakr;
 
+import com.tweakr.util.ImagePanel;
+
 import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ContainerEvent;
+import java.awt.event.ContainerListener;
 import java.awt.image.BufferedImage;
 
 public class CategorizationUI extends Box {
 
-    JLabel imageLabel;
-    BufferedImage currentImage;
+    ImagePanel imagePanel;
+    JTextField noImageText;
 
     public CategorizationUI() {
         super(BoxLayout.Y_AXIS);
+        setAlignmentX(0.5f);
+        setAlignmentY(0.5f);
 
+        imagePanel = new ImagePanel(true);
+        noImageText = new JTextField("Press [File > Open Folder] to start categorizing images");
         setCurrentImage(null);
+
+        add(imagePanel);
     }
 
     public void setCurrentImage(BufferedImage img) {
-        if (imageLabel != null) remove(imageLabel);
-        currentImage = img;
-        if (currentImage == null) {
-            imageLabel = new JLabel("Press [File > Open Folder] to start categorizing images");
-        } else {
-            imageLabel = new JLabel(new ImageIcon(currentImage));
-        }
-        imageLabel.setAlignmentX(0.5f);
-        imageLabel.setAlignmentY(0.5f);
-        add(imageLabel);
+        imagePanel.setImage(img);
+
+        imagePanel.setVisible(img != null);
+        noImageText.setVisible(img == null);
     }
 }
