@@ -55,6 +55,7 @@ public class ImagePanel extends JPanel {
     public void setImage(Image image) {
         this.image = image;
         if (image != null) setPreferredSize(new Dimension(image.getWidth(null), image.getHeight(null)));
+        repaint();
     }
 
     public boolean isCentered() {

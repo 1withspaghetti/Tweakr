@@ -39,11 +39,7 @@ public class Application extends JFrame {
         categorizationUI = new CategorizationUI();
         add(categorizationUI, BorderLayout.CENTER);
 
-        try {
-            categorizationUI.setCurrentImage(ImageIO.read(new File("C:\\Users\\tyler\\OneDrive\\Pictures\\Saved Pictures\\blue_mountains.jpg")));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        openFolderButton.addActionListener(e->categorizationUI.openFolder());
 
 
         setVisible(true);

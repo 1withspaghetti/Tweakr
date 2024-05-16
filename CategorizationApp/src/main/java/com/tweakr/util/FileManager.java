@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Iterator;
+import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class FileManager implements Iterator<Path> {
@@ -11,17 +13,19 @@ public class FileManager implements Iterator<Path> {
     public static final Path OUTPUT_FOLDER_TWEAKING = Path.of(System.getProperty("user.dir"), "output", "tweaking");
     public static final Path OUTPUT_FOLDER_LOCKED_IN = Path.of(System.getProperty("user.dir"), "output", "lockedIn");
 
-    private Path inputFolder;
+    private final Path inputFolder;
     private Path current;
+    private int currentIndex;
 
     /**
      * Creates a new FileManager that iterates through the given folder to categorize the image files as tweaking or lockedIn.
      * @param folder - The folder to iterate through
      */
     public FileManager(Path folder) {
-        if (folder == null || Files.isDirectory(folder))
+        if (folder == null || !Files.isDirectory(folder))
             throw new IllegalArgumentException("Input folder must be a valid directory");
         this.inputFolder = folder;
+        currentIndex = 0;
     }
 
     /**
@@ -30,7 +34,7 @@ public class FileManager implements Iterator<Path> {
      * @return True if there is at least one file remaining in the folder
      */
     public boolean hasNext() {
-        return listFiles().findAny().isPresent();
+        return currentIndex < listFiles().size();
     }
 
     /**
@@ -39,7 +43,9 @@ public class FileManager implements Iterator<Path> {
      * @return The next file
      */
     public Path next() {
-        return current = listFiles().findFirst().orElseThrow();
+        current = listFiles().get(currentIndex);
+        if (current != null && Files.exists(current)) currentIndex++;
+        return current;
     }
 
     /**
@@ -56,10 +62,10 @@ public class FileManager implements Iterator<Path> {
             Files.move(current, OUTPUT_FOLDER_LOCKED_IN.resolve(current.getFileName()));
     }
 
-    private Stream<Path> listFiles() {
+    private List<Path> listFiles() {
         try (final Stream<Path> stream = Files.list(inputFolder)) {
 
-            return stream.filter(Files::isRegularFile);
+            return stream.filter(Files::isRegularFile).collect(Collectors.toList());
 
         } catch (IOException e) {
             throw new RuntimeException(e);
