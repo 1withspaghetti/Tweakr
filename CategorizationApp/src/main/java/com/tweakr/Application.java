@@ -8,6 +8,7 @@ public class Application extends JFrame {
     JMenuBar menu;
     JMenu fileMenu;
     JMenuItem openFolderButton;
+    JMenuItem closeFolderButton;
     JMenuItem exitButton;
 
     CategorizationUI categorizationUI;
@@ -17,7 +18,6 @@ public class Application extends JFrame {
         UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLayout(new BorderLayout());
         setSize(800, 800);
         setResizable(true);
         setLocationRelativeTo(null);
@@ -27,6 +27,7 @@ public class Application extends JFrame {
 
         fileMenu = new JMenu("File");
         fileMenu.add(openFolderButton = new JMenuItem("Open Folder"));
+        fileMenu.add(closeFolderButton = new JMenuItem("Close Current Folder"));
         fileMenu.addSeparator();
         fileMenu.add(exitButton = new JMenuItem("Exit"));
 
@@ -34,10 +35,11 @@ public class Application extends JFrame {
         setJMenuBar(menu);
 
         categorizationUI = new CategorizationUI();
-        add(categorizationUI, BorderLayout.CENTER);
+        add(categorizationUI);
 
         openFolderButton.addActionListener(e->categorizationUI.openFolder());
-
+        closeFolderButton.addActionListener(e->categorizationUI.closeFolder());
+        exitButton.addActionListener(e->dispose());
 
         setVisible(true);
     }

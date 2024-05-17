@@ -5,59 +5,120 @@ import com.tweakr.util.ImagePanel;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
+import javax.swing.border.EmptyBorder;
+import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.concurrent.Flow;
 
-public class CategorizationUI extends Box {
+public class CategorizationUI extends JPanel {
 
+    // This FileManager is used as an iterator through the selected folder and classify/move the images to the output directories
     FileManager fileManager;
 
-    BufferedImage currentImage;
+    // Children components
+    JPanel centerPanel;
     ImagePanel imagePanel;
+    JPanel noImagePanel;
+    Box noImageInfo;
     JLabel noImageText;
-
+    JButton fileChooserButton;
     JFileChooser fileChooser;
 
+    JPanel buttonPanel;
+    JButton lockedInButton;
+    JButton tweakingButton;
+
     public CategorizationUI() {
-        super(BoxLayout.Y_AXIS);
+        super(new BorderLayout());
         setAlignmentX(0.5f);
         setAlignmentY(0.5f);
 
+        Font font = getFont().deriveFont(18f);
+
+        centerPanel = new JPanel(new CardLayout());
+
+
+        // Screen for when no folder is selected
+        // Create a panel that centers a box containing the button and label
+        noImagePanel = new JPanel(new GridBagLayout());
+        noImageInfo = new Box(BoxLayout.Y_AXIS);
+
+        fileChooserButton = new JButton("Open Folder");
+        fileChooserButton.setFont(font);
+        fileChooserButton.addActionListener(e->openFolder());
+        fileChooserButton.setAlignmentX(0.5f);
+        noImageInfo.add(fileChooserButton);
+
+        noImageInfo.add(Box.createRigidArea(new Dimension(0, 5))); // Margin
+
+        noImageText = new JLabel("Select a folder to start categorizing images");
+        noImageText.setFont(font);
+        noImageText.setAlignmentX(0.5f);
+        noImageInfo.add(noImageText);
+
+        noImagePanel.add(noImageInfo);
+        centerPanel.add(noImagePanel, "noImagePanel");
+
+        // Image panel displaying the image
         imagePanel = new ImagePanel(true);
         imagePanel.setVisible(false);
-        noImageText = new JLabel("Press [File > Open Folder] to start categorizing images");
-        noImageText.setFont(noImageText.getFont().deriveFont(16f));
-        noImageText.setAlignmentX(0.5f);
-        noImageText.setAlignmentY(0.5f);
+        centerPanel.add(imagePanel, "imagePanel");
 
+        // Invisible file chooser for opening the gui
         fileChooser = new JFileChooser();
         fileChooser.setCurrentDirectory(new File("."));
         fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 
+        // File management
         fileManager = null;
 
-        this.addMouseListener(new MouseListener() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                if (fileManager != null) nextImage();
-            }
 
-            @Override
-            public void mousePressed(MouseEvent e) {}
-            @Override
-            public void mouseReleased(MouseEvent e) {}
-            @Override
-            public void mouseEntered(MouseEvent e) {}
-            @Override
-            public void mouseExited(MouseEvent e) {}
+        // Bottom buttons for categorizing
+        buttonPanel = new JPanel();
+        buttonPanel.setBackground(Color.WHITE);
+        buttonPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+        ((FlowLayout)buttonPanel.getLayout()).setHgap(30);
+        buttonPanel.setVisible(false);
+
+        lockedInButton = new JButton("← Locked In");
+        lockedInButton.setMnemonic(KeyEvent.VK_LEFT);
+        lockedInButton.setToolTipText("[ALT + LEFT]");
+        lockedInButton.setFont(font);
+        lockedInButton.setBackground(Color.GREEN);
+        buttonPanel.add(lockedInButton);
+
+        tweakingButton = new JButton("Tweaking →");
+        tweakingButton.setMnemonic(KeyEvent.VK_RIGHT);
+        tweakingButton.setToolTipText("[ALT + RIGHT]");
+        tweakingButton.setFont(font);
+        tweakingButton.setBackground(Color.ORANGE);
+        buttonPanel.add(tweakingButton);
+
+        lockedInButton.addActionListener(e->{
+            try {
+                fileManager.move(false);
+                nextImage();
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
         });
 
-        add(imagePanel);
-        add(noImageText);
+        tweakingButton.addActionListener(e->{
+            try {
+                fileManager.move(true);
+                nextImage();
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
+        });
+
+        // Add everything to the main layout
+        add(centerPanel, BorderLayout.CENTER);
+        add(buttonPanel, BorderLayout.SOUTH);
     }
 
     public void openFolder() {
@@ -69,6 +130,11 @@ public class CategorizationUI extends Box {
         }
     }
 
+    public void closeFolder() {
+        fileManager = null;
+        setCurrentImage(null);
+    }
+
     public void nextImage() {
         if (fileManager == null) throw new RuntimeException("Cannot increment image with no folder selected");
         try {
@@ -76,19 +142,19 @@ public class CategorizationUI extends Box {
                 Path next = fileManager.next();
                 setCurrentImage(ImageIO.read(next.toFile()));
             } else {
-                fileManager = null;
-                setCurrentImage(null);
+                closeFolder();
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private void setCurrentImage(BufferedImage img) {
-        currentImage = img;
+    private void setCurrentImage(BufferedImage currentImage) {
         imagePanel.setImage(currentImage);
 
-        imagePanel.setVisible(currentImage != null);
-        noImageText.setVisible(currentImage == null);
+        CardLayout centerCardLayout = (CardLayout) centerPanel.getLayout();
+        centerCardLayout.show(centerPanel, currentImage != null ? "imagePanel" : "noImagePanel");
+
+        buttonPanel.setVisible(currentImage != null);
     }
 }

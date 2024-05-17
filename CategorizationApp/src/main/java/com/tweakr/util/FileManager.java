@@ -26,6 +26,13 @@ public class FileManager implements Iterator<Path> {
             throw new IllegalArgumentException("Input folder must be a valid directory");
         this.inputFolder = folder;
         currentIndex = 0;
+
+        try {
+            if (!Files.isDirectory(OUTPUT_FOLDER_TWEAKING)) Files.createDirectories(OUTPUT_FOLDER_TWEAKING);
+            if (!Files.isDirectory(OUTPUT_FOLDER_LOCKED_IN)) Files.createDirectories(OUTPUT_FOLDER_LOCKED_IN);
+        } catch (IOException e) {
+            throw new RuntimeException("Error while creating output directories", e);
+        }
     }
 
     /**
