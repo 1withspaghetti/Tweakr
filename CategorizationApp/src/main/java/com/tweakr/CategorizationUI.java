@@ -140,6 +140,7 @@ public class CategorizationUI extends JPanel {
         try {
             if (fileManager.hasNext()) {
                 Path next = fileManager.next();
+                System.out.println("Incremented to "+next);
                 setCurrentImage(ImageIO.read(next.toFile()));
             } else {
                 closeFolder();
