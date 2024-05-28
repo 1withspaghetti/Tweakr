@@ -32,75 +32,61 @@ torch.manual_seed(SEED)
 torch.cuda.manual_seed(SEED)
 torch.backends.cudnn.deterministic = True
 
-# Define the root directory for the dataset
 ROOT = 'data'
 
-# Extract the dataset archive
 datasets.utils.extract_archive('CUB_200_2011.tgz', ROOT)
 
-# Define the ratio for splitting the data into training and testing sets
 TRAIN_RATIO = 0.8
 
-# Define directories for data
 data_dir = os.path.join(ROOT, 'CUB_200_2011')
 images_dir = os.path.join(data_dir, 'images')
 train_dir = os.path.join(data_dir, 'train')
 test_dir = os.path.join(data_dir, 'test')
 
-# Remove existing training and testing directories if they exist
 if os.path.exists(train_dir):
     shutil.rmtree(train_dir)
 if os.path.exists(test_dir):
     shutil.rmtree(test_dir)
 
-# Create new training and testing directories
 os.makedirs(train_dir)
 os.makedirs(test_dir)
 
-# List all classes (subdirectories) in the images directory
 classes = os.listdir(images_dir)
 
-# Iterate over each class to split images into training and testing sets
 for c in classes:
+
     class_dir = os.path.join(images_dir, c)
+
     images = os.listdir(class_dir)
 
-    # Calculate the number of training images
     n_train = int(len(images) * TRAIN_RATIO)
 
-    # Split images into training and testing sets
     train_images = images[:n_train]
     test_images = images[n_train:]
 
-    # Create class subdirectories in training and testing directories
     os.makedirs(os.path.join(train_dir, c), exist_ok=True)
     os.makedirs(os.path.join(test_dir, c), exist_ok=True)
 
-    # Copy training images to the training directory
     for image in train_images:
         image_src = os.path.join(class_dir, image)
         image_dst = os.path.join(train_dir, c, image)
         shutil.copyfile(image_src, image_dst)
 
-    # Copy testing images to the testing directory
     for image in test_images:
         image_src = os.path.join(class_dir, image)
         image_dst = os.path.join(test_dir, c, image)
         shutil.copyfile(image_src, image_dst)
 
-# Create a dataset for calculating mean and standard deviation of images
-train_data = datasets.ImageFolder(root=train_dir, transform=transforms.ToTensor())
+train_data = datasets.ImageFolder(root=train_dir,
+                                  transform=transforms.ToTensor())
 
-# Initialize mean and standard deviation tensors
 means = torch.zeros(3)
 stds = torch.zeros(3)
 
-# Calculate mean and standard deviation for each channel
 for img, label in train_data:
     means += torch.mean(img, dim=(1, 2))
     stds += torch.std(img, dim=(1, 2))
 
-# Average the mean and standard deviation by the number of images
 means /= len(train_data)
 stds /= len(train_data)
 
