@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -14,8 +15,8 @@ public class FileManager implements Iterator<Path> {
     public static final Path OUTPUT_FOLDER_LOCKED_IN = Path.of(System.getProperty("user.dir"), "output", "lockedIn");
 
     private final Path inputFolder;
-    private Path current;
     private int currentIndex;
+    private final Path[] files;
 
     /**
      * Creates a new FileManager that iterates through the given folder to categorize the image files as tweaking or lockedIn.
@@ -26,6 +27,8 @@ public class FileManager implements Iterator<Path> {
             throw new IllegalArgumentException("Input folder must be a valid directory");
         this.inputFolder = folder;
         currentIndex = 0;
+
+        files = listFiles().toArray(new Path[0]);
 
         try {
             if (!Files.isDirectory(OUTPUT_FOLDER_TWEAKING)) Files.createDirectories(OUTPUT_FOLDER_TWEAKING);
@@ -41,7 +44,7 @@ public class FileManager implements Iterator<Path> {
      * @return True if there is at least one file remaining in the folder
      */
     public boolean hasNext() {
-        return currentIndex < listFiles().size();
+        return currentIndex + 1 < files.length;
     }
 
     /**
@@ -50,9 +53,9 @@ public class FileManager implements Iterator<Path> {
      * @return The next file
      */
     public Path next() {
-        current = listFiles().get(currentIndex);
-        if (current != null && Files.exists(current)) currentIndex++;
-        return current;
+        if (!hasNext()) throw new NoSuchElementException("Cannot get next file when no files are remaining.");
+        currentIndex++;
+        return files[currentIndex];
     }
 
     /**
@@ -63,6 +66,7 @@ public class FileManager implements Iterator<Path> {
      * @throws IOException If an IOException occurs during the file move
      */
     public void move(boolean isTweaking) throws IOException {
+        Path current = files[currentIndex];
         if (isTweaking)
             Files.move(current, OUTPUT_FOLDER_TWEAKING.resolve(current.getFileName()));
         else
