@@ -27,8 +27,6 @@ public class Application extends JFrame {
     ImagePanel displayedImage;
     Random rand = new Random();
     Color bg = new Color(150, 150, 150);
-    SpringLayout spring = new SpringLayout();
-
 
     public Application() throws UnsupportedLookAndFeelException, ClassNotFoundException, InstantiationException, IllegalAccessException {
 
@@ -64,8 +62,6 @@ public class Application extends JFrame {
         exitButton = new JButton("Exit");
 
         displayedImage = new ImagePanel(true);
-        //displayedImage.setSize(new Dimension(1, 1));
-
 
         // a couple more things need to be set up for the output box
         textOutput = new JTextArea(1, 15);
@@ -81,18 +77,19 @@ public class Application extends JFrame {
         panelTop.add(fileButton);
         panelTop.add(exitButton);
 
-        // boxlayout wasnt working so i just made a 3x3 grid with empty containers on the sides
-        bottomGrid.add(Box.createHorizontalStrut(40));
+        // boxlayout wasn't working, so I just made a 3x3 grid with empty containers on the sides
+        // turns out the width of the struts don't actually matter
+        bottomGrid.add(Box.createHorizontalStrut(6));
         bottomGrid.add(sendButton);
+        bottomGrid.add(Box.createHorizontalStrut(6));
 
-        bottomGrid.add(Box.createHorizontalStrut(40));
-        bottomGrid.add(Box.createHorizontalStrut(40));
+        bottomGrid.add(Box.createHorizontalStrut(6));
         bottomGrid.add(textOutput);
-        bottomGrid.add(Box.createHorizontalStrut(40));
+        bottomGrid.add(Box.createHorizontalStrut(6));
 
-        bottomGrid.add(Box.createHorizontalStrut(40));
+        bottomGrid.add(Box.createHorizontalStrut(6));
         bottomGrid.add(confidenceOutput);
-        bottomGrid.add(Box.createHorizontalStrut(40));
+        bottomGrid.add(Box.createHorizontalStrut(6));
 
         // adding panels to JFrame
         add(panelTop, BorderLayout.NORTH);
@@ -115,11 +112,11 @@ public class Application extends JFrame {
         });
 
         // making exitButton close the application when pressed
-        exitButton.addActionListener(e -> {
-            dispose();
-        });
+        exitButton.addActionListener(e -> dispose());
 
-        // currently the application doesn't have any AI app to talk with, so it just gets a random bool
+        // currently the application doesn't have any AI app to talk with, so it just gets a random bool and float
+        // putting this here, so I remember to use it later
+        // https://stackoverflow.com/questions/27267391/running-a-py-file-from-java
         sendButton.addActionListener(e -> {
 
             textOutput.setText(null);
@@ -128,6 +125,7 @@ public class Application extends JFrame {
             if (currentIcon != null) {
 
                 boolean tweakin = rand.nextBoolean();
+                float tweakPercent = 0;
 
                 textOutput.append("this fish is ");
                 if (tweakin) {
@@ -136,7 +134,10 @@ public class Application extends JFrame {
                     textOutput.append("locked in");
                 }
 
-                confidenceOutput.append("Confidence: " + (rand.nextFloat() * 100) + "%");
+                while (tweakPercent <= 50.0f) {
+                    tweakPercent = rand.nextFloat() * 100;
+                }
+                confidenceOutput.append("Confidence: " + (tweakPercent + "%"));
 
             } else {
 
