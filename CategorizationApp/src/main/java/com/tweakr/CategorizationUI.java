@@ -101,7 +101,7 @@ public class CategorizationUI extends JPanel {
         lockedInButton.addActionListener(e->{
             try {
                 fileManager.move(false);
-                nextImage();
+                nextImage(false);
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
             }
@@ -110,7 +110,7 @@ public class CategorizationUI extends JPanel {
         tweakingButton.addActionListener(e->{
             try {
                 fileManager.move(true);
-                nextImage();
+                nextImage(true);
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
             }
@@ -126,7 +126,7 @@ public class CategorizationUI extends JPanel {
         if (result == JFileChooser.APPROVE_OPTION) {
             System.out.println(fileChooser.getSelectedFile().toPath());
             fileManager = new FileManager(fileChooser.getSelectedFile().toPath());
-            nextImage();
+            nextImage(false);
         }
     }
 
@@ -135,13 +135,13 @@ public class CategorizationUI extends JPanel {
         setCurrentImage(null);
     }
 
-    public void nextImage() {
+    public void nextImage(boolean isTweaking) {
         if (fileManager == null) throw new RuntimeException("Cannot increment image with no folder selected");
         try {
             if (fileManager.hasNext()) {
                 Path next = fileManager.next();
                 System.out.println("Incremented to "+next);
-                setCurrentImage(ImageIO.read(next.toFile()));
+                setCurrentImage(ImageIO.read(next.toFile()), isTweaking);
             } else {
                 closeFolder();
             }
@@ -150,12 +150,21 @@ public class CategorizationUI extends JPanel {
         }
     }
 
-    private void setCurrentImage(BufferedImage currentImage) {
-        imagePanel.setImage(currentImage);
+    private void setCurrentImage(BufferedImage newImage) {
+        imagePanel.setImage(newImage);
 
         CardLayout centerCardLayout = (CardLayout) centerPanel.getLayout();
-        centerCardLayout.show(centerPanel, currentImage != null ? "imagePanel" : "noImagePanel");
+        centerCardLayout.show(centerPanel, newImage != null ? "imagePanel" : "noImagePanel");
 
-        buttonPanel.setVisible(currentImage != null);
+        buttonPanel.setVisible(newImage != null);
+    }
+
+    private void setCurrentImage(BufferedImage newImage, boolean wasTweaking) {
+        imagePanel.swipeImage(newImage, wasTweaking);
+
+        CardLayout centerCardLayout = (CardLayout) centerPanel.getLayout();
+        centerCardLayout.show(centerPanel, newImage != null ? "imagePanel" : "noImagePanel");
+
+        buttonPanel.setVisible(newImage != null);
     }
 }
