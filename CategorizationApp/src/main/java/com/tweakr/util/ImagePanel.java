@@ -2,6 +2,8 @@ package com.tweakr.util;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.AffineTransform;
+import java.util.concurrent.*;
 
 /**
  * <p>A swing component capable of displaying an image, resizing it to fit within its bounds
@@ -9,8 +11,18 @@ import java.awt.*;
  */
 public class ImagePanel extends JPanel {
 
+    public static final long SWIPE_DURATION = 1000;
+    public static final long SWIPE_FPS = 30;
+
     private Image image;
     private boolean centered;
+
+    private Image prev = null;
+    private long swipeTime = 0;
+    private boolean swipeToLeft = true;
+
+    ScheduledExecutorService exe;
+    ScheduledFuture<?> task = null;
 
     /**
      * <p>Creates a new ImagePanel instance that will try to display an image, scaling it to fit in the space of the component.</p>
@@ -46,6 +58,12 @@ public class ImagePanel extends JPanel {
         this.image = image;
         this.centered = centered;
         if (image != null) setPreferredSize(new Dimension(image.getWidth(null), image.getHeight(null)));
+        exe = Executors.newSingleThreadScheduledExecutor(r -> {
+            Thread t = Executors.defaultThreadFactory().newThread(r);
+            t.setPriority(Thread.MIN_PRIORITY);
+            t.setDaemon(true);
+            return t;
+        });
     }
 
     public Image getImage() {
@@ -56,6 +74,23 @@ public class ImagePanel extends JPanel {
         this.image = image;
         if (image != null) setPreferredSize(new Dimension(image.getWidth(null), image.getHeight(null)));
         repaint();
+    }
+
+    public void swipeImage(Image newImage, boolean toLeft) {
+        prev = image;
+        swipeTime = System.currentTimeMillis();
+        swipeToLeft = toLeft;
+        image = newImage;
+        if (task != null && !task.isCancelled()) task.cancel(true);
+        task = exe.scheduleAtFixedRate(()->{
+            System.out.println("    task ran");
+            if (System.currentTimeMillis() - swipeTime > SWIPE_DURATION) {
+                System.out.println("    task canceled");
+                task.cancel(false);
+                return;
+            }
+            this.repaint(1000 / SWIPE_FPS);
+        }, 1000 / SWIPE_FPS, 1000 / SWIPE_FPS, TimeUnit.MILLISECONDS);
     }
 
     public boolean isCentered() {
@@ -70,34 +105,71 @@ public class ImagePanel extends JPanel {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
 
+        Graphics2D g2d = (Graphics2D) g;
+        Dimension size = getSize();
+
+        double delta = Math.min((double) (System.currentTimeMillis() - swipeTime) / SWIPE_DURATION, 1);
+
+        // Handle fading swipe
+        if (prev != null && System.currentTimeMillis() - swipeTime < SWIPE_DURATION) {
+            System.out.println(delta);
+
+            Dimension imgSize = containedImageDimension(prev);
+
+            AffineTransform ogAf = g2d.getTransform();
+            Composite ogComp = g2d.getComposite();
+
+            AffineTransform af = new AffineTransform();
+            af.setToRotation(Math.PI / 6 * delta * (swipeToLeft ? 1 : -1), (double) this.getWidth() / 2, this.getHeight());
+            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, (float) (1 - delta)));
+            g2d.setTransform(af);
+            g2d.drawImage(
+                    prev.getScaledInstance(imgSize.width, imgSize.height, Image.SCALE_AREA_AVERAGING),
+                    centered ? size.width / 2 - imgSize.width / 2 : 0,
+                    centered ? size.height / 2 - imgSize.height / 2 : 0,
+                    null);
+
+            g2d.setTransform(ogAf);
+            g2d.setComposite(ogComp);
+        }
+
         if (image != null) {
 
-            // Gets the size of the component and image
-            Dimension size = getSize();
-            int imgWidth = image.getWidth(null);
-            int imgHeight = image.getHeight(null);
-            if (imgWidth == -1 || imgHeight == -1) throw new RuntimeException("The size of the image is unknown");
+            Dimension imgSize = containedImageDimension(image);
 
-            double imgRatio = (double) imgWidth / imgHeight;
-            double compRatio = size.getWidth() / size.getHeight();
-
-            // Calculates the width and height of the image to fit inside the component
-            int dWidth = 0;
-            int dHeight = 0;
-            if (imgRatio >= compRatio) {
-                dWidth = (int) size.getWidth();
-                dHeight = (int) (dWidth / imgRatio);
-            } else {
-                dHeight = (int) size.getHeight();
-                dWidth = (int) (imgRatio * dHeight);
-            }
+            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, (float) delta));
 
             // Draws the image
             g.drawImage(
-                    image.getScaledInstance(dWidth, dHeight, Image.SCALE_AREA_AVERAGING),
-                    centered ? size.width / 2 - dWidth / 2 : 0,
-                    centered ? size.height / 2 - dHeight / 2 : 0,
+                    image.getScaledInstance(imgSize.width, imgSize.height, Image.SCALE_AREA_AVERAGING),
+                    centered ? size.width / 2 - imgSize.width / 2 : 0,
+                    centered ? size.height / 2 - imgSize.height / 2 : 0,
                     null);
         }
+    }
+
+    private Dimension containedImageDimension(Image inner) {
+
+        Dimension size = getSize();
+        double compRatio = size.getWidth() / size.getHeight();
+
+        // Gets the size of the component and image
+        int imgWidth = inner.getWidth(null);
+        int imgHeight = inner.getHeight(null);
+        if (imgWidth == -1 || imgHeight == -1) throw new RuntimeException("The size of the image is unknown");
+        double imgRatio = (double) imgWidth / imgHeight;
+
+        // Calculates the width and height of the image to fit inside the component
+        int dWidth = 0;
+        int dHeight = 0;
+        if (imgRatio >= compRatio) {
+            dWidth = (int) size.getWidth();
+            dHeight = (int) (dWidth / imgRatio);
+        } else {
+            dHeight = (int) size.getHeight();
+            dWidth = (int) (imgRatio * dHeight);
+        }
+
+        return new Dimension(dWidth, dHeight);
     }
 }
