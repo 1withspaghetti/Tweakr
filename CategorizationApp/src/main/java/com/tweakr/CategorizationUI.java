@@ -7,6 +7,7 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -89,36 +90,32 @@ public class CategorizationUI extends JPanel {
         buttonPanel.setVisible(false);
 
         lockedInButton = new JButton("← Locked In");
-        lockedInButton.setMnemonic(KeyEvent.VK_LEFT);
-        lockedInButton.setToolTipText("[ALT + LEFT]");
+        lockedInButton.setToolTipText("[LEFT ARROW KEY]");
         lockedInButton.setFont(font);
         lockedInButton.setBackground(Color.GREEN);
         buttonPanel.add(lockedInButton);
 
         tweakingButton = new JButton("Tweaking →");
-        tweakingButton.setMnemonic(KeyEvent.VK_RIGHT);
-        tweakingButton.setToolTipText("[ALT + RIGHT]");
+        tweakingButton.setToolTipText("[RIGHT ARROW KEY]");
         tweakingButton.setFont(font);
         tweakingButton.setBackground(Color.ORANGE);
         buttonPanel.add(tweakingButton);
 
-        lockedInButton.addActionListener(e->{
-            try {
-                fileManager.move(false);
-                nextImage(false);
-            } catch (Exception ex) {
-                ex.printStackTrace(System.err);
-                root.showErrorMessage(ex);
+        lockedInButton.addActionListener(e->swipeLeft());
+        lockedInButton.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), "press");
+        lockedInButton.getActionMap().put("press", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                swipeLeft();
             }
         });
 
-        tweakingButton.addActionListener(e->{
-            try {
-                fileManager.move(true);
-                nextImage(true);
-            } catch (Exception ex) {
-                ex.printStackTrace(System.err);
-                root.showErrorMessage(ex);
+        tweakingButton.addActionListener(e->swipeRight());
+        tweakingButton.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), "press");
+        tweakingButton.getActionMap().put("press", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                swipeRight();
             }
         });
 
@@ -148,6 +145,26 @@ public class CategorizationUI extends JPanel {
         } catch (Exception e) {
             e.printStackTrace(System.err);
             root.showErrorMessage(e);
+        }
+    }
+
+    public void swipeLeft() {
+        try {
+            fileManager.move(false);
+            nextImage(false);
+        } catch (Exception ex) {
+            ex.printStackTrace(System.err);
+            root.showErrorMessage(ex);
+        }
+    }
+
+    public void swipeRight() {
+        try {
+            fileManager.move(true);
+            nextImage(true);
+        } catch (Exception ex) {
+            ex.printStackTrace(System.err);
+            root.showErrorMessage(ex);
         }
     }
 

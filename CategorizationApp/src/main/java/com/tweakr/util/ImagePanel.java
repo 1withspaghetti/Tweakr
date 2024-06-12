@@ -112,7 +112,6 @@ public class ImagePanel extends JPanel {
 
         // Handle fading swipe
         if (prev != null && System.currentTimeMillis() - swipeTime < SWIPE_DURATION) {
-            System.out.println(delta);
 
             Dimension imgSize = containedImageDimension(prev);
 
