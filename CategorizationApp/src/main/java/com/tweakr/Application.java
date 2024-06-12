@@ -34,7 +34,7 @@ public class Application extends JFrame {
         menu.add(fileMenu);
         setJMenuBar(menu);
 
-        categorizationUI = new CategorizationUI();
+        categorizationUI = new CategorizationUI(this);
         add(categorizationUI);
 
         openFolderButton.addActionListener(e->categorizationUI.openFolder());
@@ -42,5 +42,9 @@ public class Application extends JFrame {
         exitButton.addActionListener(e->dispose());
 
         setVisible(true);
+    }
+
+    public void showErrorMessage(Exception ex) {
+        JOptionPane.showMessageDialog(this, ex.getClass().getName()+": "+ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
     }
 }

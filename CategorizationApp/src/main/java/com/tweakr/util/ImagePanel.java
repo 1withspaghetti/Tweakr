@@ -3,7 +3,6 @@ package com.tweakr.util;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.AffineTransform;
-import java.util.concurrent.*;
 
 /**
  * <p>A swing component capable of displaying an image, resizing it to fit within its bounds
@@ -11,8 +10,8 @@ import java.util.concurrent.*;
  */
 public class ImagePanel extends JPanel {
 
-    public static final long SWIPE_DURATION = 1000;
-    public static final long SWIPE_FPS = 30;
+    public static final long SWIPE_DURATION = 500;
+    public static final long SWIPE_FPS = 60;
 
     private Image image;
     private boolean centered;
@@ -21,8 +20,7 @@ public class ImagePanel extends JPanel {
     private long swipeTime = 0;
     private boolean swipeToLeft = true;
 
-    ScheduledExecutorService exe;
-    ScheduledFuture<?> task = null;
+    Timer timer = null;
 
     /**
      * <p>Creates a new ImagePanel instance that will try to display an image, scaling it to fit in the space of the component.</p>
@@ -55,15 +53,14 @@ public class ImagePanel extends JPanel {
      * @param centered - If the image should be centered relative to the components size
      */
     public ImagePanel(Image image, boolean centered) {
-        this.image = image;
         this.centered = centered;
-        if (image != null) setPreferredSize(new Dimension(image.getWidth(null), image.getHeight(null)));
-        exe = Executors.newSingleThreadScheduledExecutor(r -> {
-            Thread t = Executors.defaultThreadFactory().newThread(r);
-            t.setPriority(Thread.MIN_PRIORITY);
-            t.setDaemon(true);
-            return t;
-        });
+        if (image != null) {
+            Dimension fit = containedImageDimension(image);
+            setPreferredSize(new Dimension(image.getWidth(null), image.getHeight(null)));
+            this.image = image.getScaledInstance(fit.width, fit.height, Image.SCALE_AREA_AVERAGING);
+        } else {
+            this.image = image;
+        }
     }
 
     public Image getImage() {
@@ -71,8 +68,13 @@ public class ImagePanel extends JPanel {
     }
 
     public void setImage(Image image) {
-        this.image = image;
-        if (image != null) setPreferredSize(new Dimension(image.getWidth(null), image.getHeight(null)));
+        if (image != null) {
+            Dimension fit = containedImageDimension(image);
+            setPreferredSize(new Dimension(image.getWidth(null), image.getHeight(null)));
+            this.image = image.getScaledInstance(fit.width, fit.height, Image.SCALE_AREA_AVERAGING);
+        } else {
+            this.image = image;
+        }
         repaint();
     }
 
@@ -80,17 +82,15 @@ public class ImagePanel extends JPanel {
         prev = image;
         swipeTime = System.currentTimeMillis();
         swipeToLeft = toLeft;
-        image = newImage;
-        if (task != null && !task.isCancelled()) task.cancel(true);
-        task = exe.scheduleAtFixedRate(()->{
-            System.out.println("    task ran");
-            if (System.currentTimeMillis() - swipeTime > SWIPE_DURATION) {
-                System.out.println("    task canceled");
-                task.cancel(false);
-                return;
-            }
+        setImage(newImage);
+        if (timer != null && timer.isRunning()) timer.stop();
+        timer = new Timer((int) (1000 / SWIPE_FPS), (e)->{
             this.repaint(1000 / SWIPE_FPS);
-        }, 1000 / SWIPE_FPS, 1000 / SWIPE_FPS, TimeUnit.MILLISECONDS);
+            if (System.currentTimeMillis() - swipeTime > SWIPE_DURATION) {
+                ((Timer) e.getSource()).stop();
+            }
+        });
+        timer.start();
     }
 
     public boolean isCentered() {
@@ -119,14 +119,15 @@ public class ImagePanel extends JPanel {
             AffineTransform ogAf = g2d.getTransform();
             Composite ogComp = g2d.getComposite();
 
-            AffineTransform af = new AffineTransform();
-            af.setToRotation(Math.PI / 6 * delta * (swipeToLeft ? 1 : -1), (double) this.getWidth() / 2, this.getHeight());
+            //AffineTransform af = new AffineTransform();
+            //af.setToTranslation(200 * delta * (swipeToLeft ? 1 : -1), 50);
+            //af.setToRotation(Math.PI / 6 * delta * (swipeToLeft ? 1 : -1), (double) this.getWidth() / 2, this.getHeight());
             g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, (float) (1 - delta)));
-            g2d.setTransform(af);
+            //g2d.setTransform(af);
             g2d.drawImage(
-                    prev.getScaledInstance(imgSize.width, imgSize.height, Image.SCALE_AREA_AVERAGING),
-                    centered ? size.width / 2 - imgSize.width / 2 : 0,
-                    centered ? size.height / 2 - imgSize.height / 2 : 0,
+                    prev,//.getScaledInstance(imgSize.width, imgSize.height, Image.SCALE_AREA_AVERAGING),
+                    (centered ? size.width / 2 - imgSize.width / 2 : 0) + (int)(200 * delta * (swipeToLeft ? 1 : -1)),
+                    (centered ? size.height / 2 - imgSize.height / 2 : 0) + (int)(50 * delta),
                     null);
 
             g2d.setTransform(ogAf);
@@ -137,11 +138,11 @@ public class ImagePanel extends JPanel {
 
             Dimension imgSize = containedImageDimension(image);
 
-            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, (float) delta));
+            if (delta < 1) g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, (float) delta));
 
             // Draws the image
             g.drawImage(
-                    image.getScaledInstance(imgSize.width, imgSize.height, Image.SCALE_AREA_AVERAGING),
+                    image,//.getScaledInstance(imgSize.width, imgSize.height, Image.SCALE_AREA_AVERAGING),
                     centered ? size.width / 2 - imgSize.width / 2 : 0,
                     centered ? size.height / 2 - imgSize.height / 2 : 0,
                     null);

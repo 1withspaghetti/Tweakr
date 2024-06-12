@@ -16,6 +16,8 @@ import java.util.concurrent.Flow;
 
 public class CategorizationUI extends JPanel {
 
+    Application root;
+
     // This FileManager is used as an iterator through the selected folder and classify/move the images to the output directories
     FileManager fileManager;
 
@@ -32,8 +34,10 @@ public class CategorizationUI extends JPanel {
     JButton lockedInButton;
     JButton tweakingButton;
 
-    public CategorizationUI() {
+    public CategorizationUI(Application root) {
         super(new BorderLayout());
+        this.root = root;
+
         setAlignmentX(0.5f);
         setAlignmentY(0.5f);
 
@@ -102,8 +106,9 @@ public class CategorizationUI extends JPanel {
             try {
                 fileManager.move(false);
                 nextImage(false);
-            } catch (IOException ex) {
-                throw new RuntimeException(ex);
+            } catch (Exception ex) {
+                ex.printStackTrace(System.err);
+                root.showErrorMessage(ex);
             }
         });
 
@@ -111,8 +116,9 @@ public class CategorizationUI extends JPanel {
             try {
                 fileManager.move(true);
                 nextImage(true);
-            } catch (IOException ex) {
-                throw new RuntimeException(ex);
+            } catch (Exception ex) {
+                ex.printStackTrace(System.err);
+                root.showErrorMessage(ex);
             }
         });
 
@@ -122,17 +128,27 @@ public class CategorizationUI extends JPanel {
     }
 
     public void openFolder() {
-        int result = fileChooser.showOpenDialog(this);
-        if (result == JFileChooser.APPROVE_OPTION) {
-            System.out.println(fileChooser.getSelectedFile().toPath());
-            fileManager = new FileManager(fileChooser.getSelectedFile().toPath());
-            nextImage(false);
+        try {
+            int result = fileChooser.showOpenDialog(this);
+            if (result == JFileChooser.APPROVE_OPTION) {
+                System.out.println(fileChooser.getSelectedFile().toPath());
+                fileManager = new FileManager(fileChooser.getSelectedFile().toPath());
+                nextImage(false);
+            }
+        } catch (Exception e) {
+            e.printStackTrace(System.err);
+            root.showErrorMessage(e);
         }
     }
 
     public void closeFolder() {
-        fileManager = null;
-        setCurrentImage(null);
+        try {
+            fileManager = null;
+            setCurrentImage(null);
+        } catch (Exception e) {
+            e.printStackTrace(System.err);
+            root.showErrorMessage(e);
+        }
     }
 
     public void nextImage(boolean isTweaking) {
