@@ -2,6 +2,7 @@ package com.tweakr;
 
 import com.tweakr.util.FileManager;
 import com.tweakr.util.ImagePanel;
+import com.tweakr.util.ToastMessage;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;

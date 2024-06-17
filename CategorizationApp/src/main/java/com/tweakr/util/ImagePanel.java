@@ -142,8 +142,8 @@ public class ImagePanel extends JPanel {
             // Draws the image
             g.drawImage(
                     image,//.getScaledInstance(imgSize.width, imgSize.height, Image.SCALE_AREA_AVERAGING),
-                    centered ? size.width / 2 - imgSize.width / 2 : 0,
-                    centered ? size.height / 2 - imgSize.height / 2 : 0,
+                    centered ? size.width / 2 - image.getWidth(null) / 2 : 0,
+                    centered ? size.height / 2 - image.getHeight(null) / 2 : 0,
                     null);
         }
     }
