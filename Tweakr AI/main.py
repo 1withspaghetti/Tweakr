@@ -718,10 +718,10 @@ pred_labels = torch.argmax(probs, 1)
 
 
 def plot_confusion_matrix(labels, pred_labels, classes):
-    fig = plt.figure(figsize=(50, 50));
-    ax = fig.add_subplot(1, 1, 1);
-    cm = confusion_matrix(labels, pred_labels);
-    cm = ConfusionMatrixDisplay(cm, display_labels=classes);
+    fig = plt.figure(figsize=(50, 50))
+    ax = fig.add_subplot(1, 1, 1)
+    cm = confusion_matrix(labels, pred_labels)
+    cm = ConfusionMatrixDisplay(cm, display_labels=classes)
     cm.plot(values_format='d', cmap='Blues', ax=ax)
     fig.delaxes(fig.axes[1])  # delete colorbar
     plt.xticks(rotation=90)
@@ -738,7 +738,7 @@ for image, label, prob, correct in zip(images, labels, probs, corrects):
     if not correct:
         incorrect_examples.append((image, label, prob))
 
-incorrect_examples.sort(reverse = True, key = lambda x: torch.max(x[2], dim = 0).values)
+incorrect_examples.sort(reverse=True, key=lambda x: torch.max(x[2], dim=0).values)
 
 
 def plot_most_incorrect(incorrect, classes, n_images, normalize=True):

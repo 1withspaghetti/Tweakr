@@ -13,7 +13,7 @@ pretrained_means = [0.485, 0.456, 0.406]
 pretrained_stds = [0.229, 0.224, 0.225]
 
 ROOT = 'data'
-data_dir = os.path.join(ROOT, 'CUB_200_2011')
+data_dir = os.path.join(ROOT, 'tweakr')
 test_dir = os.path.join(data_dir, 'test')
 
 
@@ -165,7 +165,7 @@ model.eval()
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model.to(device)
 
-image = r'C:\Users\Jude\Downloads\mallard.png'
+image = r'C:\Users\Jude\Documents\CS\Tweakr\Tweakr AI\data\tweakr\train\2.tweaking\ED103777.jpg'
 inputImage = preprocess_image(image).to(device)
 
 output, features = model(inputImage)
