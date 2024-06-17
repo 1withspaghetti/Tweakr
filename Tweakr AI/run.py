@@ -1,7 +1,7 @@
+import argparse
 import torch
 from collections import namedtuple
 import torch.nn as nn
-import torch.nn.functional as F
 import torchvision.datasets as datasets
 import os
 import torchvision.transforms as transforms
@@ -16,7 +16,6 @@ ROOT = 'data'
 data_dir = os.path.join(ROOT, 'tweakr')
 test_dir = os.path.join(data_dir, 'test')
 
-
 def preprocess_image(image_path):
     img = Image.open(image_path).convert("RGB")
     img = img.resize((224, 224))  # Resize to the model's expected input size
@@ -24,7 +23,6 @@ def preprocess_image(image_path):
     img = np.transpose(img, (2, 0, 1))  # Transpose the image to (channels, height, width)
     img = np.expand_dims(img, axis=0)  # Add a batch dimension
     return torch.tensor(img, dtype=torch.float32)  # Ensure the tensor has the correct data type
-
 
 class ResNet(nn.Module):
     def __init__(self, config, output_dim):
@@ -85,7 +83,6 @@ class ResNet(nn.Module):
 
         return x, h
 
-
 class Bottleneck(nn.Module):
     expansion = 4
 
@@ -134,14 +131,12 @@ class Bottleneck(nn.Module):
 
         return x
 
-
 test_transforms = transforms.Compose([
     transforms.Resize(pretrained_size),
     transforms.CenterCrop(pretrained_size),
     transforms.ToTensor(),
     transforms.Normalize(mean=pretrained_means, std=pretrained_stds)
 ])
-
 
 def format_label(label):
     label = label.split('.')[-1]
@@ -150,38 +145,35 @@ def format_label(label):
     label = label.replace(' ', '')
     return label
 
+def main(image_path):
+    test_data = datasets.ImageFolder(root=test_dir, transform=test_transforms)
+    test_data.classes = [format_label(c) for c in test_data.classes]
+    OUTPUT_DIM = len(test_data.classes)
 
-test_data = datasets.ImageFolder(root=test_dir, transform=test_transforms)
-test_data.classes = [format_label(c) for c in test_data.classes]
-OUTPUT_DIM = len(test_data.classes)
+    ResNetConfig = namedtuple('ResNetConfig', ['block', 'n_blocks', 'channels'])
+    resnet50_config = ResNetConfig(block=Bottleneck, n_blocks=[3, 4, 6, 3], channels=[64, 128, 256, 512])
 
-ResNetConfig = namedtuple('ResNetConfig', ['block', 'n_blocks', 'channels'])
-resnet50_config = ResNetConfig(block=Bottleneck, n_blocks=[3, 4, 6, 3], channels=[64, 128, 256, 512])
+    model = ResNet(resnet50_config, OUTPUT_DIM)
+    model.load_state_dict(torch.load("tut5-model.pt"))
+    model.eval()
 
-model = ResNet(resnet50_config, OUTPUT_DIM)
-model.load_state_dict(torch.load("tut5-model.pt"))
-model.eval()
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    model.to(device)
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-model.to(device)
+    inputImage = preprocess_image(image_path).to(device)
 
-image = r'C:\Users\Jude\Documents\CS\Tweakr\Tweakr AI\data\tweakr\train\2.tweaking\ED103777.jpg'
-inputImage = preprocess_image(image).to(device)
+    outputs, _ = model(inputImage)
+    softmax = nn.Softmax(dim=1)
+    probs = softmax(outputs)
+    confidence, preds = torch.max(probs, 1)
 
-output, features = model(inputImage)
+    for idx, (conf, pred) in enumerate(zip(confidence, preds)):
+        is_second_class = pred.item() == 1
+        print(f"{is_second_class} {conf.item()*100:.2f}")
 
-# Convert the output tensor to class probabilities
-probabilities = F.softmax(output, dim=1)
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Evaluate an image with ResNet')
+    parser.add_argument('image_path', type=str, help='Path to the image to evaluate')
+    args = parser.parse_args()
 
-# Find the index of the class with the highest probability
-_, predicted_class = probabilities.max(1)
-
-# Map the predicted class index to the class label
-predicted_label = test_data.classes[predicted_class.item()]
-
-# Get the confidence percentage for the predicted class
-confidence = probabilities[0, predicted_class.item()].item() * 100
-
-# Display the predicted label and confidence
-print("Predicted label:", predicted_label)
-print("Confidence: {:.2f}%".format(confidence))
+    main(args.image_path)
