@@ -1,0 +1,6 @@
+Guide to get this working on your machine:
+ download pycharm + make project
+ import all files 
+within project virtual environment get and run get-pip.py (pip is a python tool to install packages)
+
+ pip install -r requirements.exe
