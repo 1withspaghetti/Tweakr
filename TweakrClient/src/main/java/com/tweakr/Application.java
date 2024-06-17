@@ -1,4 +1,6 @@
 package com.tweakr;
+import com.tweakr.util.PythonInterface;
+
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
@@ -7,6 +9,8 @@ import java.io.IOException;
 import java.util.Random;
 
 public class Application extends JFrame {
+
+    PythonInterface pythonInterface;
 
     // initializing UI components
     JFileChooser fileChooser;
@@ -33,6 +37,8 @@ public class Application extends JFrame {
         super("Tweakr");
 
         UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+
+        pythonInterface = new PythonInterface();
 
         // setting some variables for the application window
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -114,9 +120,7 @@ public class Application extends JFrame {
         // making exitButton close the application when pressed
         exitButton.addActionListener(e -> dispose());
 
-        // currently the application doesn't have any AI app to talk with, so it just gets a random bool and float
-        // putting this here, so I remember to use it later
-        // https://stackoverflow.com/questions/27267391/running-a-py-file-from-java
+
         sendButton.addActionListener(e -> {
 
             textOutput.setText(null);
@@ -124,20 +128,16 @@ public class Application extends JFrame {
 
             if (currentIcon != null) {
 
-                boolean tweakin = rand.nextBoolean();
-                float tweakPercent = 0;
+                textOutput.setText("Loading...");
 
-                textOutput.append("this fish is ");
-                if (tweakin) {
-                    textOutput.append("tweakin");
-                } else {
-                    textOutput.append("locked in");
-                }
-
-                while (tweakPercent <= 50.0f) {
-                    tweakPercent = rand.nextFloat() * 100;
-                }
-                confidenceOutput.append("Confidence: " + (tweakPercent + "%"));
+                // Submits to the python interface and provides callbacks that are ran on result and error
+                pythonInterface.runModelOnImage(imagePath, result->{
+                    textOutput.setText("this fish is "+(result.isTweaking() ? "tweakin" : "locked in"));
+                    confidenceOutput.setText("Confidence: " + (result.getConfidence() + "%"));
+                }, err->{
+                    textOutput.setText("Error :c (check console)");
+                    err.printStackTrace(System.err);
+                });
 
             } else {
 
