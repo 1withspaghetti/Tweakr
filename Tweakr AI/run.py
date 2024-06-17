@@ -146,9 +146,7 @@ def format_label(label):
     return label
 
 def main(image_path):
-    test_data = datasets.ImageFolder(root=test_dir, transform=test_transforms)
-    test_data.classes = [format_label(c) for c in test_data.classes]
-    OUTPUT_DIM = len(test_data.classes)
+    OUTPUT_DIM = 2 # 2 outputs for binary classification
 
     ResNetConfig = namedtuple('ResNetConfig', ['block', 'n_blocks', 'channels'])
     resnet50_config = ResNetConfig(block=Bottleneck, n_blocks=[3, 4, 6, 3], channels=[64, 128, 256, 512])

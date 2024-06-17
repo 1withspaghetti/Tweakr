@@ -17,7 +17,6 @@ public class PythonInterface implements Closeable {
     Pattern resultsPattern = Pattern.compile("(true|false) (\\d+(.\\d+)?)", Pattern.CASE_INSENSITIVE);
 
     ExecutorService exe;
-    Future task;
 
     /**
      * Creates the new PythonInterface with a new single thread executor service
@@ -35,29 +34,30 @@ public class PythonInterface implements Closeable {
     public void runModelOnImage(File image,
                                        Consumer<PredictionResult> resultCallback,
                                        Consumer<Exception> errCallback) {
-        task = exe.submit(()->{
+        exe.submit(()->{
             try {
                 ProcessBuilder builder = new ProcessBuilder("python", "\"../Tweakr AI/run.py\"", "\""+image.getAbsolutePath()+"\"");
                 builder.directory(new File("../Tweakr AI/"));
                 builder.redirectErrorStream(true);
+
                 Process p = builder.start();
                 BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
+
                 String line;
                 while ((line = reader.readLine()) != null) {
-                    System.out.println("Python > "+line);
+                    System.out.println("[Python Output] > "+line);
                     Matcher m = resultsPattern.matcher(line);
                     if (m.matches()) {
-                        System.out.println("Found result: "+m.group(1)+" with "+m.group(2));
                         resultCallback.accept(
                                 new PredictionResult(
                                         Boolean.parseBoolean(m.group(1).toLowerCase()),
                                         Double.parseDouble(m.group(2))
                                 ));
+                        return;
                     }
                 }
-                p.onExit().thenRun(()->{
-                   task.cancel(true);
-                });
+
+                throw new RuntimeException("Python exited with error code "+ p.exitValue()+" and no result");
             } catch (Exception e) {
                 errCallback.accept(e);
             }
