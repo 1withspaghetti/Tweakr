@@ -47,7 +47,11 @@
     ```bash
     python tweakAI.py
     ```
+   **THIS PROGRAM WILL NOT RUN WITHOUT THE DATA FROM`[folder that tweakAI.py is in]\data\tweakr`**
     
 ## Additional Examples and Data Analysis
 
 1. For more examples of training implementation and some data analysis, check out `main.py`. This script contains additional functionalities and examples related to the project. 
+   
+   
+   **THIS PROGRAM WILL NOT RUN WITHOUT THE DATA FROM`[folder that main.py is in]\data\CUB_200_2011`**
